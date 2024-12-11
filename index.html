@@ -1,0 +1,3319 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Análisis HNO 2025 - Tablero Humanitario</title>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.css"
+    />
+    <style>
+      :root {
+        --un-blue: #00aedb;
+        --un-green: #72bf44;
+        --un-yellow: #ffc800;
+        --un-orange: #ff5b20;
+        --un-red: #ed1847;
+        --un-purple: #a05fb4;
+        --un-gray: #aea9a9;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+      }
+
+      .dashboard-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .header-title {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .header-title h1 {
+        color: var(--un-blue);
+        font-size: 1.8em;
+      }
+
+      .header-stats {
+        display: flex;
+        gap: 10px;
+      }
+
+      .header-stat {
+        padding: 5px 15px;
+        background: var(--un-blue);
+        color: white;
+        border-radius: 4px;
+        font-size: 0.9em;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .header-button {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 4px;
+        background: var(--un-gray);
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.9em;
+        transition: opacity 0.2s;
+      }
+
+      .header-button:hover {
+        opacity: 0.9;
+      }
+
+      .main-kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      .kpi-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .kpi-icon {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-size: 1.2em;
+        color: var(--un-blue);
+        opacity: 0.2;
+      }
+
+      .kpi-title {
+        color: #666;
+        font-size: 0.9em;
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
+
+      .kpi-value {
+        font-size: 2em;
+        font-weight: bold;
+        color: var(--un-blue);
+        margin-bottom: 5px;
+      }
+
+      .kpi-subvalue {
+        font-size: 0.8em;
+        color: #888;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+
+      #map {
+        background: white;
+        border-radius: 8px;
+        height: 500px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .filters-container {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .filter-group {
+        margin-bottom: 20px;
+      }
+
+      .filter-group:last-child {
+        margin-bottom: 0;
+      }
+
+      .filter-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #444;
+      }
+
+      .filter-select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      .multiselect-container {
+        position: relative;
+      }
+
+      .multiselect-dropdown {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .multiselect-dropdown::after {
+        content: "\f107";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+      }
+
+      .multiselect-options {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        margin-top: 5px;
+      }
+
+      .multiselect-option {
+        padding: 8px 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .multiselect-option:hover {
+        background: #f5f5f5;
+      }
+
+      .multiselect-option.selected {
+        background: var(--un-blue);
+        color: white;
+      }
+
+      .severity-range {
+        padding: 10px 0;
+      }
+
+      .range-slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 4px;
+        border-radius: 2px;
+        background: #ddd;
+        outline: none;
+        margin: 15px 0;
+      }
+
+      .range-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: var(--un-blue);
+        cursor: pointer;
+      }
+
+      .range-values {
+        display: flex;
+        justify-content: space-between;
+        color: #666;
+        font-size: 0.9em;
+      }
+
+      .sectoral-analysis {
+        margin-bottom: 30px;
+      }
+
+      .sectoral-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .sector-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .sector-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .sector-icon {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--un-blue);
+        color: white;
+        border-radius: 50%;
+        font-size: 0.9em;
+      }
+
+      .sector-title {
+        font-weight: bold;
+        color: #444;
+      }
+
+      .sector-stats {
+        display: grid;
+        gap: 10px;
+      }
+
+      .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 5px 0;
+        border-bottom: 1px solid #eee;
+      }
+
+      .stat-label {
+        color: #666;
+        font-size: 0.9em;
+      }
+
+      .stat-value {
+        font-weight: bold;
+        color: #444;
+      }
+
+      .severity-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 5px;
+      }
+
+      .charts-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+      }
+
+      .chart-box {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        min-height: 300px;
+      }
+
+      .chart-title {
+        color: #444;
+        font-size: 1.1em;
+        margin-bottom: 15px;
+        font-weight: bold;
+      }
+
+      .leaflet-popup-content {
+        margin: 13px 19px;
+        font-size: 0.9em;
+      }
+
+      .municipality-popup {
+        max-width: 300px;
+      }
+
+      .municipality-popup h3 {
+        margin-bottom: 10px;
+        color: var(--un-blue);
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 5px;
+      }
+
+      .popup-stats {
+        margin-bottom: 15px;
+      }
+
+      .popup-sectors {
+        display: grid;
+        gap: 8px;
+      }
+
+      .popup-sector {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: 10px;
+        font-size: 0.85em;
+        align-items: center;
+      }
+
+      @media (max-width: 768px) {
+        .dashboard-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .main-kpis {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .charts-container {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .severity-buttons {
+        display: flex;
+        gap: 10px;
+      }
+
+      .severity-button {
+        padding: 10px 15px;
+        border: 2px solid var(--un-blue);
+        border-radius: 4px;
+        cursor: pointer;
+        background: white;
+        color: var(--un-blue);
+        font-weight: bold;
+        transition: all 0.3s ease;
+      }
+
+      .severity-button.selected {
+        background: var(--un-blue);
+        color: white;
+      }
+.chart-box {
+  position: relative;
+  height: 400px !important;
+}
+.chart-box canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+    </style>
+  </head>
+
+  <body>
+    <div class="dashboard-container">
+      <header class="header">
+        <div class="header-title">
+          <h1>Análisis Panorama de Necesidades 2025</h1>
+          <div class="header-stats">
+            <div class="header-stat">Sub Oficina Maracaibo</div>
+            <div class="header-stat">OCHA</div>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="header-button" onclick="printDashboard()">
+            <i class="fas fa-print"></i> Imprimir
+          </button>
+          <button class="header-button" onclick="exportData()">
+            <i class="fas fa-download"></i> Exportar
+          </button>
+        </div>
+      </header>
+      <div class="main-kpis">
+        <div class="kpi-card">
+          <i class="fas fa-users kpi-icon"></i>
+          <div class="kpi-title">Población Total</div>
+          <div class="kpi-value" id="total-population">-</div>
+          <div class="kpi-subvalue">personas</div>
+        </div>
+        <div class="kpi-card">
+          <i class="fas fa-map-marker-alt kpi-icon"></i>
+          <div class="kpi-title">Municipios</div>
+          <div class="kpi-value" id="attended-population">-</div>
+          <div class="kpi-subvalue" id="attended-population-sub">-</div>
+        </div>
+        <div class="kpi-card">
+          <i class="fas fa-user-shield kpi-icon"></i>
+          <div class="kpi-title">PIN</div>
+          <div class="kpi-value" id="pin-total">-</div>
+          <div class="kpi-subvalue">personas con necesidades</div>
+        </div>
+        <div class="kpi-card">
+          <i class="fas fa-chart-line kpi-icon"></i>
+          <div class="kpi-title">Severidad prom.</div>
+          <div class="kpi-value" id="avg-severity">-</div>
+          <div class="kpi-subvalue">escala 1-5</div>
+        </div>
+        <div class="kpi-card">
+          <i class="fas fa-handshake kpi-icon"></i>
+          <div class="kpi-title">Organizaciones</div>
+          <div class="kpi-value" id="total-orgs">-</div>
+          <div class="kpi-subvalue">socios por municipio (prom)</div>
+        </div>
+        <div class="kpi-card">
+          <i class="fas fa-layer-group kpi-icon"></i>
+          <div class="kpi-title">Sectores</div>
+          <div class="kpi-value" id="total-sectors">-</div>
+          <div class="kpi-subvalue">áreas de intervención</div>
+        </div>
+      </div>
+      <div class="dashboard-grid">
+        <div id="map"></div>
+        <div class="filters-container">
+          <div class="filter-group">
+            <label class="filter-label"> Estados: </label>
+            <select class="filter-select" id="state-select">
+              <option value="all">Todos los estados</option>
+              <option value="falcón">Falcón</option>
+              <option value="zulia">Zulia</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label"> Municipios: </label>
+            <div class="multiselect-container" id="municipality-multiselect">
+              <div class="multiselect-dropdown">Seleccionar municipios...</div>
+              <div class="multiselect-options"></div>
+            </div>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label"> Priorización: </label>
+            <select class="filter-select" id="priority-select">
+              <option value="all">Todas las priorizaciones</option>
+              <option value="A1">A1</option>
+              <option value="A2">A2</option>
+<option value="B">B</option>	      
+<option value="M">M</option
+                          </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label"> Severidad: </label>
+            <div class="severity-buttons">
+              <button class="severity-button selected" data-value="1">1</button>
+              <button class="severity-button selected" data-value="2">2</button>
+              <button class="severity-button selected" data-value="3">3</button>
+              <button class="severity-button selected" data-value="4">4</button>
+              <button class="severity-button selected" data-value="5">5</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="sectoral-analysis">
+        <h2>Análisis Sectorial</h2>
+        <div class="sectoral-grid" id="sectoral-grid"></div>
+      </div>
+      <div class="charts-container">
+        <div class="chart-box">
+          <h3 class="chart-title">Distribución Severidad</h3>
+          <canvas id="severity-chart"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3 class="chart-title">Distribución PIN</h3>
+          <canvas id="pin-trend-chart"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3 class="chart-title">Presencia de Socios (prom.)</h3>
+          <canvas id="partners-chart"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3 class="chart-title">% PIN respecto a Población Total</h3>
+          <canvas id="coverage-chart"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3 class="chart-title">Dinámica de la Severidad</h3>
+          <canvas id="sector-severity-chart"></canvas>
+        </div>
+      </div>
+<style>
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+}
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+</style>
+    </div>
+    <footer
+      style="
+        text-align: center;
+        padding: 20px;
+        background: white;
+        margin-top: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      "
+    >
+      Sub Oficina OCHA Maracaibo, Noviembre 2024<br />
+      <small style="color: #666">
+        (Fuente:análisis internos y cifras oficiales HNO 2024-2025)
+      </small>
+    </footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+<script type="text/javascript">
+    window.onload = function() {
+        Chart.defaults.font.family = 'Arial, sans-serif';
+        Chart.defaults.color = '#444';
+
+      const severityData = [
+        {
+          state: "Falcón",
+          code: "VE1101",
+          name: "Acosta",
+          education: 2,
+          nutrition: 2,
+          foodSecurity: 3,
+          health: 3,
+          protection: 3,
+          shelter: 3,
+          wash: 2,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1102",
+          name: "Bolívar",
+          education: 2,
+          nutrition: 2,
+          foodSecurity: 3,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 3,
+          cp: 3,
+          gbv: 2,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1103",
+          name: "Buchivacoa",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 3,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 2,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1104",
+          name: "Cacique Manaure",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 2,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 3,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1105",
+          name: "Carirubana",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 2,
+          health: 3,
+          protection: 3,
+          shelter: 3,
+          wash: 4,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1106",
+          name: "Colina",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 4,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 4,
+          cp: 3,
+          gbv: 4,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1107",
+          name: "Dabajuro",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 3,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 3,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1108",
+          name: "Democracia",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 2,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 4,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1109",
+          name: "Falcón",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 4,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 4,
+          cp: 3,
+          gbv: 4,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1110",
+          name: "Federación",
+          education: 2,
+          nutrition: 3,
+          foodSecurity: 4,
+          health: 3,
+          protection: 3,
+          shelter: 3,
+          wash: 3,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1111",
+          name: "Jacura",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 2,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 2,
+          cp: 3,
+          gbv: 2,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1112",
+          name: "Los Taques",
+          education: 2,
+          nutrition: 2,
+          foodSecurity: 4,
+          health: 3,
+          protection: 3,
+          shelter: 3,
+          wash: 4,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1113",
+          name: "Mauroa",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 4,
+          health: 3,
+          protection: 3,
+          shelter: 3,
+          wash: 3,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1114",
+          name: "Miranda (Falcón)",
+          education: 2,
+          nutrition: 2,
+          foodSecurity: 2,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 2,
+          cp: 3,
+          gbv: 4,
+          finalSeverity: 2,
+        },
+        {
+          state: "Falcón",
+          code: "VE1115",
+          name: "Monseñor Iturriza",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 2,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 4,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1116",
+          name: "Palmasola",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 3,
+          health: 3,
+          protection: 3,
+          shelter: 3,
+          wash: 2,
+          cp: 3,
+          gbv: 4,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1117",
+          name: "Petit",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 2,
+          health: 3,
+          protection: 3,
+          shelter: 3,
+          wash: 3,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1118",
+          name: "Píritu",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 2,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 4,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1119",
+          name: "San Francisco (Falcón)",
+          education: 2,
+          nutrition: 2,
+          foodSecurity: 2,
+          health: 3,
+          protection: 4,
+          shelter: 4,
+          wash: 4,
+          cp: 3,
+          gbv: 2,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1120",
+          name: "Silva",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 1,
+          health: 3,
+          protection: 4,
+          shelter: 4,
+          wash: 2,
+          cp: 3,
+          gbv: 4,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1121",
+          name: "Sucre (Falcón)",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 2,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 4,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1122",
+          name: "Tocópero",
+          education: 2,
+          nutrition: 2,
+          foodSecurity: 1,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 3,
+          cp: 3,
+          gbv: 2,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1123",
+          name: "Unión",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 4,
+          health: 3,
+          protection: 3,
+          shelter: 3,
+          wash: 5,
+          cp: 3,
+          gbv: 4,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1124",
+          name: "Urumaco",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 2,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 2,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Falcón",
+          code: "VE1125",
+          name: "Zamora",
+          education: 2,
+          nutrition: 2,
+          foodSecurity: 4,
+          health: 3,
+          protection: 4,
+          shelter: 3,
+          wash: 3,
+          cp: 3,
+          gbv: 4,
+          finalSeverity: 3,
+        },
+        {
+          state: "Zulia",
+          code: "VE2301",
+          name: "Almirante Padilla",
+          education: 4,
+          nutrition: 4,
+          foodSecurity: 3,
+          health: 3,
+          protection: 3,
+          shelter: 4,
+          wash: 5,
+          cp: 4,
+          gbv: 4,
+          finalSeverity: 4,
+        },
+        {
+          state: "Zulia",
+          code: "VE2302",
+          name: "Baralt",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 3,
+          health: 3,
+          protection: 4,
+          shelter: 4,
+          wash: 3,
+          cp: 3,
+          gbv: 4,
+          finalSeverity: 3,
+        },
+        {
+          state: "Zulia",
+          code: "VE2303",
+          name: "Cabimas",
+          education: 4,
+          nutrition: 4,
+          foodSecurity: 3,
+          health: 3,
+          protection: 3,
+          shelter: 4,
+          wash: 2,
+          cp: 2,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Zulia",
+          code: "VE2304",
+          name: "Catatumbo",
+          education: 3,
+          nutrition: 4,
+          foodSecurity: 3,
+          health: 3,
+          protection: 3,
+          shelter: 4,
+          wash: 5,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Zulia",
+          code: "VE2305",
+          name: "Colón",
+          education: 4,
+          nutrition: 4,
+          foodSecurity: 4,
+          health: 3,
+          protection: 3,
+          shelter: 4,
+          wash: 4,
+          cp: 4,
+          gbv: 4,
+          finalSeverity: 4,
+        },
+        {
+          state: "Zulia",
+          code: "VE2306",
+          name: "Francisco Javier Pulgar",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 2,
+          health: 3,
+          protection: 3,
+          shelter: 4,
+          wash: 3,
+          cp: 4,
+          gbv: 4,
+          finalSeverity: 3,
+        },
+        {
+          state: "Zulia",
+          code: "VE2307",
+          name: "Jesús Enrique Lossada",
+          education: 3,
+          nutrition: 2,
+          foodSecurity: 3,
+          health: 3,
+          protection: 4,
+          shelter: 4,
+          wash: 3,
+          cp: 4,
+          gbv: 4,
+          finalSeverity: 3,
+        },
+        {
+          state: "Zulia",
+          code: "VE2308",
+          name: "Jesús María Semprún",
+          education: 4,
+          nutrition: 4,
+          foodSecurity: 4,
+          health: 3,
+          protection: 3,
+          shelter: 4,
+          wash: 3,
+          cp: 5,
+          gbv: 4,
+          finalSeverity: 4,
+        },
+        {
+          state: "Zulia",
+          code: "VE2309",
+          name: "La Cañada de Urdaneta",
+          education: 4,
+          nutrition: 4,
+          foodSecurity: 3,
+          health: 3,
+          protection: 3,
+          shelter: 4,
+          wash: 2,
+          cp: 5,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+  state: "Zulia",
+  code: "VE2310", // Lagunillas
+  name: "Lagunillas",
+  education: 4,          
+  nutrition: 4,          
+  foodSecurity: 3,
+  health: 3,
+  protection: 3,         
+  shelter: 4,
+  wash: 2,              
+  cp: 2,                
+  gbv: 2,               
+  finalSeverity: 3,
+        },
+        {
+          state: "Zulia",
+  code: "VE2311", // Machiques de Perijá
+  name: "Machiques de Perijá",
+  education: 3,          
+  nutrition: 3,          
+  foodSecurity: 4,
+  health: 3,
+  protection: 3,
+  shelter: 4,
+  wash: 4,
+  cp: 3,                
+  gbv: 4,
+  finalSeverity: 3,     
+        },
+        {
+           state: "Zulia",
+  code: "VE2312", // Mara
+  name: "Mara",
+  education: 3,
+  nutrition: 4,          
+  foodSecurity: 3,
+  health: 3,
+  protection: 3,         
+  shelter: 4,
+  wash: 4,
+  cp: 3,                
+  gbv: 4,
+  finalSeverity: 3,
+        },
+        {
+          state: "Zulia",
+          code: "VE2313",
+          name: "Maracaibo",
+          education: 4,
+          nutrition: 4,
+          foodSecurity: 3,
+          health: 3,
+          protection: 3,
+          shelter: 4,
+          wash: 2,
+          cp: 4,
+          gbv: 4,
+          finalSeverity: 4,
+        },
+        {
+          state: "Zulia",
+  code: "VE2314", // Miranda
+  name: "Miranda",
+  education: 4,    
+  nutrition: 4,    
+  foodSecurity: 3,
+  health: 3,
+  protection: 3,   
+  shelter: 4,
+  wash: 3,
+  cp: 4,
+  gbv: 3,          
+  finalSeverity: 3,
+        },
+        {
+          state: "Zulia",
+          code: "VE2315",
+          name: "Indígena Bolivariano Guajira",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 4,
+          health: 3,
+          protection: 4,
+          shelter: 4,
+          wash: 5,
+          cp: 4,
+          gbv: 4,
+          finalSeverity: 4,
+        },
+        {
+          state: "Zulia",
+          code: "VE2316",
+          name: "Rosario de Perijá",
+          education: 3,
+          nutrition: 4,
+          foodSecurity: 2,
+          health: 3,
+          protection: 4,
+          shelter: 4,
+          wash: 4,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+        {
+          state: "Zulia",
+  code: "VE2317", // San Francisco
+  name: "San Francisco",
+  education: 4,
+  nutrition: 4,
+  foodSecurity: 3,
+  health: 3,
+  protection: 4,
+  shelter: 4,
+  wash: 2,
+  cp: 2,
+  gbv: 3,
+  finalSeverity: 4,   
+        },
+        {
+          state: "Zulia",
+          code: "VE2318",
+          name: "Santa Rita",
+          education: 4,
+          nutrition: 4,
+          foodSecurity: 4,
+          health: 3,
+          protection: 3,
+          shelter: 4,
+          wash: 4,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 4,
+        },
+        {
+           state: "Zulia",
+  code: "VE2319", // Simón Bolívar
+  name: "Simón Bolívar",
+  education: 3,
+  nutrition: 3,
+  foodSecurity: 3,
+  health: 3,
+  protection: 3,
+  shelter: 4,
+  wash: 3,              // cambio de 4 a 3
+  cp: 4,                // cambio de 3 a 4
+  gbv: 3,
+  finalSeverity: 3,
+        },
+        {
+          state: "Zulia",
+  code: "VE2320", // Sucre
+  name: "Sucre",
+  education: 3,
+  nutrition: 3,
+  foodSecurity: 3,
+  health: 3,
+  protection: 3,
+  shelter: 4,
+  wash: 2,
+  cp: 4,
+  gbv: 4,               
+  finalSeverity: 3,
+        },
+        {
+          state: "Zulia",
+          code: "VE2321",
+          name: "Valmore Rodríguez",
+          education: 3,
+          nutrition: 3,
+          foodSecurity: 2,
+          health: 3,
+          protection: 3,
+          shelter: 4,
+          wash: 2,
+          cp: 3,
+          gbv: 3,
+          finalSeverity: 3,
+        },
+      ];
+
+      const pinData = [
+        {
+          state: "Falcón",
+          code: "VE1101",
+          name: "Acosta",
+          population: 19045,
+          education: 0,
+          nutrition: 764,
+          foodSecurity: 3352,
+          health: 4959,
+          protection: 10475,
+          shelter: 571,
+          wash: 0,
+          cp: 2147,
+          gbv: 1524,
+        },
+        {
+          state: "Falcón",
+          code: "VE1102",
+          name: "Bolívar",
+          population: 8539,
+          education: 0,
+          nutrition: 349,
+          foodSecurity: 1503,
+          health: 2223,
+          protection: 3416,
+          shelter: 854,
+          wash: 1708,
+          cp: 881,
+          gbv: 683,
+        },
+        {
+          state: "Falcón",
+          code: "VE1103",
+          name: "Buchivacoa",
+          population: 22897,
+          education: 1213,
+          nutrition: 953,
+          foodSecurity: 4030,
+          health: 5962,
+          protection: 7943,
+          shelter: 1457,
+          wash: 0,
+          cp: 2096,
+          gbv: 1589,
+        },
+        {
+          state: "Falcón",
+          code: "VE1104",
+          name: "Cacique Manaure",
+          population: 10874,
+          education: 1064,
+          nutrition: 442,
+          foodSecurity: 1914,
+          health: 2831,
+          protection: 5981,
+          shelter: 435,
+          wash: 2175,
+          cp: 1269,
+          gbv: 870,
+        },
+        {
+          state: "Falcón",
+          code: "VE1105",
+          name: "Carirubana",
+          population: 239444,
+          education: 16609,
+          nutrition: 9568,
+          foodSecurity: 42142,
+          health: 62342,
+          protection: 7943,
+          shelter: 13388,
+          wash: 119722,
+          cp: 1883,
+          gbv: 1589,
+        },
+        {
+          state: "Falcón",
+          code: "VE1106",
+          name: "Colina",
+          population: 41510,
+          education: 2884,
+          nutrition: 1891,
+          foodSecurity: 7306,
+          health: 10808,
+          protection: 10921,
+          shelter: 3174,
+          wash: 20755,
+          cp: 2102,
+          gbv: 1589,
+        },
+        {
+          state: "Falcón",
+          code: "VE1107",
+          name: "Dabajuro",
+          population: 23388,
+          education: 1772,
+          nutrition: 955,
+          foodSecurity: 4116,
+          health: 6089,
+          protection: 10921,
+          shelter: 1169,
+          wash: 4678,
+          cp: 2078,
+          gbv: 1589,
+        },
+        {
+          state: "Falcón",
+          code: "VE1108",
+          name: "Democracia",
+          population: 9944,
+          education: 1052,
+          nutrition: 384,
+          foodSecurity: 1750,
+          health: 2589,
+          protection: 5469,
+          shelter: 442,
+          wash: 4972,
+          cp: 988,
+          gbv: 796,
+        },
+        {
+          state: "Falcón",
+          code: "VE1109",
+          name: "Falcón",
+          population: 46215,
+          education: 3122,
+          nutrition: 1918,
+          foodSecurity: 8134,
+          health: 12032,
+          protection: 10921,
+          shelter: 2773,
+          wash: 23108,
+          cp: 1907,
+          gbv: 1589,
+        },
+        {
+          state: "Falcón",
+          code: "VE1110",
+          name: "Federación",
+          population: 29251,
+          education: 0,
+          nutrition: 1225,
+          foodSecurity: 5148,
+          health: 7616,
+          protection: 10921,
+          shelter: 4179,
+          wash: 5850,
+          cp: 2119,
+          gbv: 1589,
+        },
+        {
+          state: "Falcón",
+          code: "VE1111",
+          name: "Jacura",
+          population: 11232,
+          education: 1202,
+          nutrition: 468,
+          foodSecurity: 1977,
+          health: 2925,
+          protection: 6178,
+          shelter: 225,
+          wash: 0,
+          cp: 1282,
+          gbv: 899,
+        },
+        {
+          state: "Falcón",
+          code: "VE1112",
+          name: "Los Taques",
+          population: 41579,
+          education: 0,
+          nutrition: 1852,
+          foodSecurity: 7318,
+          health: 10825,
+          protection: 7943,
+          shelter: 0,
+          wash: 20790,
+          cp: 2043,
+          gbv: 1589,
+        },
+        {
+          state: "Falcón",
+          code: "VE1113",
+          name: "Mauroa",
+          population: 24920,
+          education: 2322,
+          nutrition: 978,
+          foodSecurity: 4386,
+          health: 6488,
+          protection: 10921,
+          shelter: 1454,
+          wash: 4984,
+          cp: 2120,
+          gbv: 1589,
+        },
+        {
+          state: "Falcón",
+          code: "VE1114",
+          name: "Miranda Falcón",
+          population: 211537,
+          education: 0,
+          nutrition: 8261,
+          foodSecurity: 37231,
+          health: 55075,
+          protection: 10921,
+          shelter: 39835,
+          wash: 0,
+          cp: 1935,
+          gbv: 1589,
+        },
+        {
+          state: "Falcón",
+          code: "VE1115",
+          name: "Monseñor Iturriza",
+          population: 19300,
+          education: 1631,
+          nutrition: 801,
+          foodSecurity: 3397,
+          health: 5025,
+          protection: 10615,
+          shelter: 1930,
+          wash: 9650,
+          cp: 1987,
+          gbv: 1544,
+        },
+        {
+          state: "Falcón",
+          code: "VE1116",
+          name: "Palmasola",
+          population: 7077,
+          education: 866,
+          nutrition: 302,
+          foodSecurity: 1246,
+          health: 1843,
+          protection: 3892,
+          shelter: 354,
+          wash: 0,
+          cp: 889,
+          gbv: 2335,
+        },
+        {
+          state: "Falcón",
+          code: "VE1117",
+          name: "Petit",
+          population: 13725,
+          education: 1243,
+          nutrition: 573,
+          foodSecurity: 2416,
+          health: 3574,
+          protection: 5490,
+          shelter: 624,
+          wash: 2745,
+          cp: 1400,
+          gbv: 1098,
+        },
+        {
+          state: "Falcón",
+          code: "VE1118",
+          name: "Píritu",
+          population: 10628,
+          education: 852,
+          nutrition: 437,
+          foodSecurity: 1871,
+          health: 2767,
+          protection: 5845,
+          shelter: 425,
+          wash: 5314,
+          cp: 1033,
+          gbv: 850,
+        },
+        {
+          state: "Falcón",
+          code: "VE1119",
+          name: "San Francisco (Falcón)",
+          population: 11030,
+          education: 0,
+          nutrition: 424,
+          foodSecurity: 1941,
+          health: 2871,
+          protection: 6067,
+          shelter: 1930,
+          wash: 5515,
+          cp: 1199,
+          gbv: 882,
+        },
+        {
+          state: "Falcón",
+          code: "VE1120",
+          name: "Silva",
+          population: 32193,
+          education: 3355,
+          nutrition: 1400,
+          foodSecurity: 5666,
+          health: 8382,
+          protection: 10921,
+          shelter: 4024,
+          wash: 0,
+          cp: 2239,
+          gbv: 1589,
+        },
+        {
+          state: "Falcón",
+          code: "VE1121",
+          name: "Sucre (Falcón)",
+          population: 5781,
+          education: 458,
+          nutrition: 221,
+          foodSecurity: 1017,
+          health: 1505,
+          protection: 3180,
+          shelter: 116,
+          wash: 2891,
+          cp: 579,
+          gbv: 462,
+        },
+        {
+          state: "Falcón",
+          code: "VE1122",
+          name: "Tocópero",
+          population: 5519,
+          education: 0,
+          nutrition: 241,
+          foodSecurity: 971,
+          health: 1437,
+          protection: 3035,
+          shelter: 221,
+          wash: 1104,
+          cp: 554,
+          gbv: 442,
+        },
+        {
+          state: "Falcón",
+          code: "VE1123",
+          name: "Unión",
+          population: 15660,
+          education: 1884,
+          nutrition: 728,
+          foodSecurity: 2756,
+          health: 4077,
+          protection: 8613,
+          shelter: 1139,
+          wash: 9396,
+          cp: 1868,
+          gbv: 5168,
+        },
+        {
+          state: "Falcón",
+          code: "VE1124",
+          name: "Urumaco",
+          population: 8349,
+          education: 619,
+          nutrition: 295,
+          foodSecurity: 1469,
+          health: 2174,
+          protection: 4592,
+          shelter: 304,
+          wash: 0,
+          cp: 795,
+          gbv: 668,
+        },
+        {
+          state: "Falcón",
+          code: "VE1125",
+          name: "Zamora",
+          population: 33210,
+          education: 0,
+          nutrition: 1336,
+          foodSecurity: 5845,
+          health: 8647,
+          protection: 10921,
+          shelter: 1661,
+          wash: 6642,
+          cp: 1952,
+          gbv: 1589,
+        },
+{
+  state: "Zulia",
+  code: "VE2301",
+  name: "Almirante Padilla",
+  population: 11929,
+  education: 2067,
+  nutrition: 621,
+  foodSecurity: 2029,
+  health: 3106,
+  protection: 6561,
+  shelter: 2091,
+  wash: 7157,
+  cp: 2948,
+  gbv: 954,
+},
+{
+  state: "Zulia",
+  code: "VE2302",
+  name: "Baralt",
+  population: 89847,
+  education: 16235,
+  nutrition: 3750,
+  foodSecurity: 15283,
+  health: 23393,
+  protection: 49416,
+  shelter: 15750,
+  wash: 17969,
+  cp: 10280,
+  gbv: 29650,
+},
+{
+  state: "Zulia",
+  code: "VE2303",
+  name: "Cabimas",
+  population: 263056,
+  education: 36515,
+  nutrition: 11403,
+  foodSecurity: 44745,
+  health: 68489,
+  protection: 37560,
+  shelter: 46114,
+  wash: 0,
+  cp: 3105,
+  gbv: 7512,
+},
+{
+  state: "Zulia",
+  code: "VE2304",
+  name: "Catatumbo",
+  population: 40702,
+  education: 7727,
+  nutrition: 1777,
+  foodSecurity: 6923,
+  health: 10598,
+  protection: 22386,
+  shelter: 11416,
+  wash: 24421,
+  cp: 4464,
+  gbv: 3256,
+},
+{
+  state: "Zulia",
+  code: "VE2305",
+  name: "Colón",
+  population: 128729,
+  education: 23118,
+  nutrition: 5459,
+  foodSecurity: 21897,
+  health: 33516,
+  protection: 51646,
+  shelter: 22566,
+  wash: 64365,
+  cp: 23344,
+  gbv: 30987,
+},
+{
+  state: "Zulia",
+  code: "VE2306",
+  name: "Francisco Javier Pulgar",
+  population: 33942,
+  education: 6565,
+  nutrition: 1498,
+  foodSecurity: 5773,
+  health: 8837,
+  protection: 30548,
+  shelter: 2380,
+  wash: 6788,
+  cp: 9505,
+  gbv: 11201,
+},
+{
+  state: "Zulia",
+  code: "VE2307",
+  name: "Jesús Enrique Lossada",
+  population: 118756,
+  education: 21713,
+  nutrition: 5354,
+  foodSecurity: 20200,
+  health: 30919,
+  protection: 51646,
+  shelter: 20818,
+  wash: 23751,
+  cp: 25896,
+  gbv: 30987,
+},
+{
+  state: "Zulia",
+  code: "VE2308",
+  name: "Jesús María Semprún",
+  population: 30484,
+  education: 6602,
+  nutrition: 1378,
+  foodSecurity: 5185,
+  health: 7937,
+  protection: 16766,
+  shelter: 5344,
+  wash: 6097,
+  cp: 8964,
+  gbv: 10060,
+},
+{
+  state: "Zulia",
+  code: "VE2309",
+  name: "La Cañada de Urdaneta",
+  population: 82210,
+  education: 14840,
+  nutrition: 3519,
+  foodSecurity: 13984,
+  health: 21404,
+  protection: 45216,
+  shelter: 5765,
+  wash: 0,
+  cp: 22558,
+  gbv: 6577,
+},
+{
+  state: "Zulia",
+  code: "VE2310",
+  name: "Lagunillas",
+  population: 203435,
+  education: 29877,
+  nutrition: 8875,
+  foodSecurity: 34604,
+  health: 52966,
+  protection: 37560,
+  shelter: 14265,
+  wash: 0,
+  cp: 3146,
+  gbv: 7512,
+},
+{
+  state: "Zulia",
+  code: "VE2311",
+  name: "Machiques de Perijá",
+  population: 122734,
+  education: 22116,
+  nutrition: 5792,
+  foodSecurity: 20877,
+  health: 31955,
+  protection: 51646,
+  shelter: 21515,
+  wash: 61367,
+  cp: 10948,
+  gbv: 30987,
+},
+{
+  state: "Zulia",
+  code: "VE2312",
+  name: "Mara",
+  population: 207221,
+  education: 41049,
+  nutrition: 9675,
+  foodSecurity: 35248,
+  health: 53952,
+  protection: 51646,
+  shelter: 36326,
+  wash: 103611,
+  cp: 11651,
+  gbv: 30987,
+},
+{
+  state: "Zulia",
+  code: "VE2313",
+  name: "Maracaibo",
+  population: 1459448,
+  education: 212454,
+  nutrition: 59642,
+  foodSecurity: 248249,
+  health: 379979,
+  protection: 37560,
+  shelter: 102337,
+  wash: 0,
+  cp: 20773,
+  gbv: 7512,
+},
+{
+  state: "Zulia",
+  code: "VE2314",
+  name: "Miranda",
+  population: 97463,             
+  education: 15469,
+  nutrition: 4323,               
+  foodSecurity: 16578,          
+  health: 25375,                 
+  protection: 51646,             
+  shelter: 17085,                
+  wash: 19493,
+  cp: 23336,                     
+  gbv: 7512,        
+},
+{
+  state: "Zulia",
+  code: "VE2315",
+  name: "Indígena Bolivariano Guajira",
+  population: 65545,
+  education: 13252,
+  nutrition: 3714,
+  foodSecurity: 11149,
+  health: 17065,
+  protection: 36050,
+  shelter: 11490,
+  wash: 39327,
+  cp: 20714,
+  gbv: 5244,
+},
+{
+  state: "Zulia",
+  code: "VE2316",
+  name: "Rosario de Perijá",
+  population: 85006,
+  education: 15384,
+  nutrition: 4565,
+  foodSecurity: 14459,
+  health: 22132,
+  protection: 46753,
+  shelter: 14902,
+  wash: 42503,
+  cp: 9526,
+  gbv: 6800,
+},
+{
+   state: "Zulia",
+  code: "VE2317",
+  name: "San Francisco",
+  population: 446757,
+  education: 68183,
+  nutrition: 19577,
+  foodSecurity: 75992,
+  health: 116317,
+  protection: 51646,
+  shelter: 31327,
+  wash: 0,
+  cp: 3226,
+  gbv: 7512,
+},
+{
+  state: "Zulia",
+  code: "VE2318",
+  name: "Santa Rita",
+  population: 59866,
+  education: 9670,
+  nutrition: 2654,
+  foodSecurity: 10183,
+  health: 15586,
+  protection: 32926,
+  shelter: 10495,
+  wash: 11973,
+  cp: 15000,
+  gbv: 4789,
+},
+{
+  state: "Zulia",
+  code: "VE2319",
+  name: "Simón Bolívar",
+  population: 43831,
+  education: 6205,
+  nutrition: 1874,
+  foodSecurity: 7456,
+  health: 11412,
+  protection: 24107,
+  shelter: 3073,
+  wash: 8766,
+  cp: 11214,
+  gbv: 3506,
+},
+{
+  state: "Zulia",
+  code: "VE2320",
+  name: "Sucre",
+  population: 60819,
+  education: 10460,
+  nutrition: 2664,
+  foodSecurity: 10345,
+  health: 15835,
+  protection: 54737,
+  shelter: 10662,
+  wash: 0,
+  cp: 16321,
+  gbv: 4866,
+},
+{
+  state: "Zulia",
+  code: "VE2321",
+  name: "Valmore Rodríguez",
+  population: 52624,
+  education: 7748,
+  nutrition: 2165,
+  foodSecurity: 8951,
+  health: 13701,
+  protection: 28943,
+  shelter: 3690,
+  wash: 0,
+  cp: 5934,
+  gbv: 4210,
+},
+      ];
+      const presenceData = [
+        {
+          code: "VE1103",
+          state: "Falcón",
+          name: "Buchivacoa",
+          priority: "A2",
+          partners: 3,
+          sectors: 2,
+        },
+        {
+          code: "VE1125",
+          state: "Falcón",
+          name: "Zamora",
+          priority: "A1",
+          partners: 9,
+          sectors: 6,
+        },
+        {
+          code: "VE1113",
+          state: "Falcón",
+          name: "Mauroa",
+          priority: "A2",
+          partners: 5,
+          sectors: 3,
+        },
+        {
+          code: "VE1112",
+          state: "Falcón",
+          name: "Los Taques",
+          priority: "A1",
+          partners: 7,
+          sectors: 6,
+        },
+        {
+          code: "VE1123",
+          state: "Falcón",
+          name: "Unión",
+          priority: "A1",
+          partners: 2,
+          sectors: 2,
+        },
+        {
+          code: "VE1114",
+          state: "Falcón",
+          name: "Miranda (Falcón)",
+          priority: "A1",
+          partners: 26,
+          sectors: 9,
+        },
+        {
+          code: "VE1107",
+          state: "Falcón",
+          name: "Dabajuro",
+          priority: "B",
+          partners: 4,
+          sectors: 5,
+        },
+        {
+          code: "VE1109",
+          state: "Falcón",
+          name: "Falcón",
+          priority: "A1",
+          partners: 15,
+          sectors: 7,
+        },
+        {
+          code: "VE1106",
+          state: "Falcón",
+          name: "Colina",
+          priority: "A1",
+          partners: 18,
+          sectors: 8,
+        },
+        {
+          code: "VE1105",
+          state: "Falcón",
+          name: "Carirubana",
+          priority: "A1",
+          partners: 9,
+          sectors: 6,
+        },
+        {
+          code: "VE1122",
+          state: "Falcón",
+          name: "Tocópero",
+          priority: "B",
+          partners: 3,
+          sectors: 2,
+        },
+        {
+          code: "VE1124",
+          state: "Falcón",
+          name: "Urumaco",
+          priority: "B",
+          partners: 6,
+          sectors: 2,
+        },
+        {
+          code: "VE1121",
+          state: "Falcón",
+          name: "Sucre (Falcón)",
+          priority: "B",
+          partners: 4,
+          sectors: 2,
+        },
+        {
+          code: "VE1117",
+          state: "Falcón",
+          name: "Petit",
+          priority: "B",
+          partners: 3,
+          sectors: 1,
+        },
+        {
+          code: "VE1110",
+          state: "Falcón",
+          name: "Federación",
+          priority: "B",
+          partners: 6,
+          sectors: 3,
+        },
+        {
+          code: "VE1116",
+          state: "Falcón",
+          name: "Palmasola",
+          priority: "B",
+          partners: 2,
+          sectors: 1,
+        },
+        {
+          code: "VE1102",
+          state: "Falcón",
+          name: "Bolívar",
+          priority: "B",
+          partners: 4,
+          sectors: 2,
+        },
+        {
+          code: "VE1120",
+          state: "Falcón",
+          name: "Silva",
+          priority: "B",
+          partners: 6,
+          sectors: 4,
+        },
+        {
+          code: "VE1108",
+          state: "Falcón",
+          name: "Democracia",
+          priority: "B",
+          partners: 2,
+          sectors: 2,
+        },
+        {
+          code: "VE1115",
+          state: "Falcón",
+          name: "Monseñor Iturriza",
+          priority: "B",
+          partners: 4,
+          sectors: 3,
+        },
+        {
+          code: "VE1101",
+          state: "Falcón",
+          name: "Acosta",
+          priority: "B",
+          partners: 5,
+          sectors: 2,
+        },
+        {
+          code: "VE1111",
+          state: "Falcón",
+          name: "Jacura",
+          priority: "B",
+          partners: 2,
+          sectors: 1,
+        },
+        {
+          code: "VE2313",
+          state: "Zulia",
+          name: "Maracaibo",
+          priority: "A2",
+          partners: 42,
+          sectors: 9,
+        },
+        {
+          code: "VE2317",
+          state: "Zulia",
+          name: "San Francisco",
+          priority: "A2",
+          partners: 22,
+          sectors: 9,
+        },
+        {
+          code: "VE2303",
+          state: "Zulia",
+          name: "Cabimas",
+          priority: "A2",
+          partners: 11,
+          sectors: 5,
+        },
+        {
+          code: "VE2319",
+          state: "Zulia",
+          name: "Simón Bolívar",
+          priority: "B",
+          partners: 3,
+          sectors: 2,
+        },
+        {
+          code: "VE2306",
+          state: "Zulia",
+          name: "Francisco Javier Pulgar",
+          priority: "B",
+          partners: 1,
+          sectors: 1,
+        },
+        {
+          code: "VE2321",
+          state: "Zulia",
+          name: "Valmore Rodríguez",
+          priority: "B",
+          partners: 1,
+          sectors: 1,
+        },
+        {
+          code: "VE2315",
+          state: "Zulia",
+          name: "Indígena Bolivariano Guajira",
+          priority: "A1",
+          partners: 30,
+          sectors: 9,
+        },
+        {
+          code: "VE2311",
+          state: "Zulia",
+          name: "Machiques de Perijá",
+          priority: "A1",
+          partners: 16,
+          sectors: 7,
+        },
+        {
+          code: "VE2312",
+          state: "Zulia",
+          name: "Mara",
+          priority: "A1",
+          partners: 25,
+          sectors: 9,
+        },
+        {
+          code: "VE2316",
+          state: "Zulia",
+          name: "Rosario de Perijá",
+          priority: "A1",
+          partners: 15,
+          sectors: 6,
+        },
+        {
+          code: "VE2304",
+          state: "Zulia",
+          name: "Catatumbo",
+          priority: "A1",
+          partners: 12,
+          sectors: 9,
+        },
+        {
+          code: "VE2318",
+          state: "Zulia",
+          name: "Santa Rita",
+          priority: "B",
+          partners: 1,
+          sectors: 1,
+        },
+        {
+          code: "VE2308",
+          state: "Zulia",
+          name: "Jesús María Semprún",
+          priority: "M",
+          partners: 10,
+          sectors: 6,
+        },
+        {
+          code: "VE2309",
+          state: "Zulia",
+          name: "La Cañada de Urdaneta",
+          priority: "M",
+          partners: 12,
+          sectors: 8,
+        },
+        {
+          code: "VE2305",
+          state: "Zulia",
+          name: "Colón",
+          priority: "A1",
+          partners: 12,
+          sectors: 8,
+        },
+        {
+          code: "VE2320",
+          state: "Zulia",
+          name: "Sucre",
+          priority: "M",
+          partners: 4,
+          sectors: 3,
+        },
+        {
+          code: "VE2301",
+          state: "Zulia",
+          name: "Almirante Padilla",
+          priority: "M",
+          partners: 10,
+          sectors: 7,
+        },
+        {
+          code: "VE2302",
+          state: "Zulia",
+          name: "Baralt",
+          priority: "M",
+          partners: 5,
+          sectors: 4,
+        },
+        {
+          code: "VE2310",
+          state: "Zulia",
+          name: "Lagunillas",
+          priority: "M",
+          partners: 8,
+          sectors: 4,
+        },
+        {
+          code: "VE2314",
+          state: "Zulia",
+          name: "Miranda",
+          priority: "M",
+          partners: 4,
+          sectors: 2,
+        },
+        {
+          code: "VE2307",
+          state: "Zulia",
+          name: "Jesús Enrique Lossada",
+          priority: "A1",
+          partners: 10,
+          sectors: 8,
+        },
+      ];
+      const coordinates = {
+        VE1101: [11.173012874215065, -68.40637207031251],
+        VE1102: [11.119622697028026, -69.67992782592775],
+        VE1103: [11.173939115629798, -70.61900138854982],
+        VE1104: [10.970853524549222, -68.54610443115236],
+        VE1105: [11.7167, -70.1833],
+        VE1106: [11.462192007850312, -69.56259727478029],
+        VE1107: [11.026124257032576, -70.67882537841798],
+        VE1108: [11.02224890349505, -70.11852264404298],
+        VE1109: [11.94763940171619, -69.9217987060547],
+        VE1110: [11.0167, -69.6667],
+        VE1111: [11.073045675058792, -68.85603904724123],
+        VE1112: [11.825181576534954, -70.25053024291994],
+        VE1113: [10.680513729812752, -71.03485107421876],
+        VE1114: [11.409360417024779, -69.64096069335939],
+        VE1115: [10.935629888135544, -68.28243255615236],
+        VE1116: [10.687261154684196, -68.48464965820314],
+        VE1117: [11.14471898539305, -69.61177825927736],
+        VE1118: [11.366785133008674, -69.13816452026369],
+        VE1119: [11.159792560879708, -68.72566223144533],
+        VE1120: [10.7886231096603, -68.32740783691408],
+        VE1121: [11.059820828563412, -69.70962524414064],
+        VE1122: [11.49979064530538, -69.25875663757326],
+        VE1123: [10.8193116861498, -69.2765235900879],
+        VE1124: [11.490959201039502, -69.33248519897462],
+        VE1125: [11.490959201039502, -69.33248519897462],
+        VE2301: [10.956023030580504, -71.66107177734376],
+        VE2302: [9.783497934426292, -71.06266021728517],
+        VE2303: [10.4, -71.45],
+        VE2304: [9.1667, -72.5833],
+        VE2305: [9.059888796803511, -72.23356246948244],
+        VE2306: [9.01530233420598, -72.11151123046876],
+        VE2307: [10.614718497179924, -71.85607910156251],
+        VE2308: [9.008859726990762, -72.73447036743165],
+        VE2309: [10.418936471116536, -71.70021057128908],
+        VE2310: [10.1333, -71.26],
+        VE2311: [10.0667, -72.55],
+        VE2312: [10.950629939379114, -71.74415588378908],
+        VE2313: [10.6333, -71.6167],
+        VE2314: [10.680176354634435, -71.51756286621095],
+        VE2315: [11.089133695565964, -71.85307502746583],
+        VE2316: [10.32167469581053, -72.32608795166017],
+        VE2317: [10.55, -71.65],
+        VE2318: [10.5333, -71.5],
+        VE2319: [10.1833, -71.3],
+        VE2320: [9.229537785857646, -71.08978271484376],
+        VE2321: [9.9167, -71.1167],
+      };
+      let map;
+     const state = {
+  selectedState: "all",
+  selectedMunicipalities: [],
+  selectedPriority: "all",
+  severityRange: [1, 5],
+  data: {
+    severityData: severityData,
+    pinData: pinData,
+    presenceData: presenceData,
+    coordinates: coordinates,
+  },
+};
+      const SECTORS = [
+        {
+          id: "wash",
+          name: "ASH",
+          icon: "tint",
+          column: "ASH",
+        },
+        {
+          id: "shelter",
+          name: "AEE",
+          icon: "home",
+          column: "Shelter",
+        },
+        {
+          id: "education",
+          name: "Educación",
+          icon: "graduation-cap",
+          column: "Education",
+        },
+        {
+          id: "nutrition",
+          name: "Nutrición",
+          icon: "apple-alt",
+          column: "Nutrition",
+        },
+        {
+          id: "protection",
+          name: "Protección",
+          icon: "shield-alt",
+          column: "Overarching Protection",
+        },
+        {
+          id: "gbv",
+          name: "VBG",
+          icon: "venus",
+          column: "Gender-based Violence (GBV)",
+        },
+        {
+          id: "health",
+          name: "Salud",
+          icon: "heartbeat",
+          column: "Health",
+        },
+      ];
+      const UN_COLORS = {
+        blue: "#00AEDB",
+        green: "#72BF44",
+        yellow: "#FFC800",
+        orange: "#FF5B20",
+        red: "#ED1847",
+        purple: "#A05FB4",
+        gray: "#AEA9A9",
+      };
+      // ... (El resto de las funciones, incluyendo initializeDashboard(), sin cambios) ...  
+function initializeDashboard() {
+  if (!document.getElementById('map')) {
+    console.error('Map container not found');
+    return;
+  }
+
+  // Inicializar mapa
+  map = L.map("map", {
+    center: [10.4, -71.3],
+    zoom: 7,
+    minZoom: 6,
+    maxZoom: 12,
+  });
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "OCHA",
+  }).addTo(map);
+
+  // Inicializar componentes
+  initializeFilters();
+
+  // Asegurar que los datos iniciales estén cargados
+  const initialData = filterData();
+  
+  if (!initialData || initialData.length === 0) {
+    console.error('No initial data available');
+    return;
+  }
+
+  const initialPinData = pinData.filter(pin => 
+    initialData.some(sev => sev.code === pin.code)
+  );
+  const initialPresenceData = presenceData.filter(pres => 
+    initialData.some(sev => sev.code === pres.code)
+  );
+
+  // Actualizar todo el dashboard
+  updateKPIs({
+    totalPopulation: document.getElementById("total-population"),
+    attendedPopulation: document.getElementById("attended-population"),
+    attendedPopulationSub: document.getElementById("attended-population-sub"),
+    pinTotal: document.getElementById("pin-total"),
+    avgSeverity: document.getElementById("avg-severity"),
+    totalOrgs: document.getElementById("total-orgs"),
+    totalSectors: document.getElementById("total-sectors"),
+  }, initialData, initialPinData, initialPresenceData);
+
+  updateMap(initialData);
+  updateCharts(initialData);
+  updateSectoralGrid();
+}
+      function formatNumber(num) {
+        return num.toLocaleString("es-VE");
+      }
+
+      function getSeverityColor(severity) {
+        if (severity <= 1) return UN_COLORS.green;
+        if (severity <= 2) return UN_COLORS.yellow;
+        if (severity <= 3) return UN_COLORS.orange;
+        if (severity <= 4) return UN_COLORS.red;
+        return UN_COLORS.purple;
+      }
+
+      function filterData() {
+        console.log("Filtering data with state:", state);
+        let filteredData = [...severityData];
+
+        if (filteredData.length === 0) {
+          console.error("No hay datos para filtrar");
+          return severityData;
+        }
+
+        if (state.selectedState !== "all") {
+          filteredData = filteredData.filter(
+            (d) =>
+              d.state
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "") ===
+              state.selectedState
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+          );
+        }
+
+        if (state.selectedMunicipalities.length > 0) {
+          filteredData = filteredData.filter((d) =>
+            state.selectedMunicipalities.includes(d.code)
+          );
+        }
+
+        if (state.selectedPriority !== "all") {
+          const priorityData = presenceData.filter(
+            (p) => p.priority === state.selectedPriority
+          );
+          const priorityCodes = priorityData.map((p) => p.code);
+          filteredData = filteredData.filter((d) =>
+            priorityCodes.includes(d.code)
+          );
+        }
+
+        filteredData = filteredData.filter((d) => {
+          const severity = parseFloat(d.finalSeverity);
+          return (
+            severity >= state.severityRange[0] &&
+            severity <= state.severityRange[1]
+          );
+        });
+
+        return filteredData;
+      }
+
+      function updateKPIs(
+        elements,
+        filteredData,
+        filteredPinData,
+        filteredPresenceData
+      ) {
+        if (
+          !elements ||
+          !filteredData ||
+          !filteredPinData ||
+          !filteredPresenceData
+        ) {
+          console.error("Faltan datos requeridos para actualizar KPIs");
+          return;
+        }
+        const totalPopulation = filteredPinData.reduce(
+          (sum, mun) => sum + mun.population,
+          0
+        );
+        elements.totalPopulation.textContent = formatNumber(totalPopulation);
+
+        elements.attendedPopulation.textContent = filteredData.length;
+        elements.attendedPopulationSub.textContent = "municipios analizados";
+
+        const totalPin = filteredPinData.reduce((sum, mun) => {
+          const maxSectorPin = Math.max(...SECTORS.map((s) => mun[s.id] || 0));
+          return sum + maxSectorPin;
+        }, 0);
+        elements.pinTotal.textContent = formatNumber(totalPin);
+
+        const avgSeverity =
+          filteredData.reduce((sum, mun) => sum + mun.finalSeverity, 0) /
+          filteredData.length;
+        elements.avgSeverity.textContent = avgSeverity.toFixed(1);
+
+        const avgOrgs =
+          filteredPresenceData.length > 0
+            ? filteredPresenceData.reduce((sum, mun) => sum + mun.partners, 0) /
+              filteredPresenceData.length
+            : 0;
+        elements.totalOrgs.textContent = Math.round(avgOrgs);
+
+        const maxSectors =
+          filteredPresenceData.length > 0
+            ? Math.max(...filteredPresenceData.map((mun) => mun.sectors))
+            : 0;
+        elements.totalSectors.textContent = maxSectors;
+      }
+
+      function updateDashboard() {
+        try {
+          const filteredData = filterData();
+          console.log("Filtered data:", filteredData);
+
+          if (!filteredData || filteredData.length === 0) {
+            console.error("No hay datos filtrados");
+            return;
+          }
+
+          const elements = {
+            totalPopulation: document.getElementById("total-population"),
+            attendedPopulation: document.getElementById("attended-population"),
+            attendedPopulationSub: document.getElementById(
+              "attended-population-sub"
+            ),
+            pinTotal: document.getElementById("pin-total"),
+            avgSeverity: document.getElementById("avg-severity"),
+            totalOrgs: document.getElementById("total-orgs"),
+            totalSectors: document.getElementById("total-sectors"),
+          };
+
+          const missingElements = Object.entries(elements)
+            .filter(([key, element]) => !element)
+            .map(([key]) => key);
+
+          if (missingElements.length > 0) {
+            console.error("Elementos faltantes:", missingElements);
+            return;
+          }
+
+          const filteredPinData = pinData.filter((pin) =>
+            filteredData.some((sev) => sev.code === pin.code)
+          );
+          const filteredPresenceData = presenceData.filter((pres) =>
+            filteredData.some((sev) => sev.code === pres.code)
+          );
+
+          updateKPIs(
+            elements,
+            filteredData,
+            filteredPinData,
+            filteredPresenceData
+          );
+          updateMap(filteredData);
+          updateCharts(filteredData);
+          updateSectoralGrid();
+        } catch (error) {
+          console.error("Error al actualizar el dashboard:", error);
+        }
+      }
+
+      function updateMap(filteredData) {
+        if (!map || !filteredData) return;
+
+        // Limpiar capas existentes excepto el mapa base
+        map.eachLayer((layer) => {
+          if (!(layer instanceof L.TileLayer)) {
+            map.removeLayer(layer);
+          }
+        });
+
+        const bounds = [];
+
+        filteredData.forEach((mun) => {
+          const coords = coordinates[mun.code];
+          if (!coords) return;
+
+          const pinInfo = pinData.find((p) => p.code === mun.code);
+          if (!pinInfo) return;
+
+          const radius = Math.sqrt(pinInfo.population) * 20;
+
+          const circle = L.circle(coords, {
+            color: getSeverityColor(mun.finalSeverity),
+            fillColor: getSeverityColor(mun.finalSeverity),
+            fillOpacity: 0.5,
+            radius: radius,
+          }).addTo(map);
+
+          const popupContent = createPopupContent(mun, pinInfo);
+          circle.bindPopup(popupContent);
+
+          bounds.push(coords);
+        });
+
+        if (bounds.length > 0) {
+          map.fitBounds(bounds);
+        }
+      }
+
+      function createPopupContent(severityInfo, pinInfo) {
+        if (!severityInfo || !severityInfo.name) {
+          return '<div class="municipality-popup"><p>Información no disponible</p></div>';
+        }
+
+        if (!pinInfo) {
+          pinInfo = {
+            population: 0,
+            ...SECTORS.reduce(
+              (acc, sector) => ({
+                ...acc,
+                [sector.id]: 0,
+              }),
+              {}
+            ),
+          };
+        }
+
+        const presenceInfo = presenceData.find(
+          (p) => p.code === severityInfo.code
+        ) || {
+          priority: "N/A",
+          partners: 0,
+          sectors: 0,
+        };
+
+        const pinTotal = Math.max(...SECTORS.map((s) => pinInfo[s.id] || 0));
+
+        return `<div class="municipality-popup">
+          <h3>${severityInfo.name}</h3>
+          <div class="popup-stats">
+            <div><strong>Población Total:</strong> ${formatNumber(
+              pinInfo.population
+            )}</div>
+            <div><strong>PIN Total:</strong> ${formatNumber(pinTotal)}</div>
+            <div><strong>Severidad Final:</strong> ${
+              severityInfo.finalSeverity
+            }</div>
+            <div><strong>Priorización Municipio:</strong> ${
+              presenceInfo.priority
+            }</div>
+            <div><strong>Organizaciones Presentes:</strong> ${
+              presenceInfo.partners
+            }</div>
+            <div><strong>Sectores Activos:</strong> ${
+              presenceInfo.sectors
+            }</div>
+          </div>
+          <div class="popup-sectors">
+            ${SECTORS.map(
+              (sector) => `
+              <div class="popup-sector">
+                <span>${sector.name}:</span>
+                <span>${formatNumber(pinInfo[sector.id])}</span>
+                <span style="color:${getSeverityColor(
+                  severityInfo[sector.id]
+                )}">
+                  (Sev: ${severityInfo[sector.id]})
+                </span>
+              </div>
+            `
+            ).join("")}
+          </div>
+        </div>`;
+      }
+function updateCharts(filteredData) {
+  if (!filteredData) return;
+
+  const chartContexts = {
+    'severity-chart': document.getElementById('severity-chart'),
+    'pin-trend-chart': document.getElementById('pin-trend-chart'),
+    'partners-chart': document.getElementById('partners-chart'),
+    'coverage-chart': document.getElementById('coverage-chart'),
+    'sector-severity-chart': document.getElementById('sector-severity-chart')
+  };
+
+  // Destruir gráficos existentes
+  Object.keys(chartContexts).forEach(id => {
+    const existing = Chart.getChart(id);
+    if (existing) {
+      existing.destroy();
+    }
+  });
+
+  const filteredPinData = pinData.filter(pin => 
+    filteredData.some(sev => sev.code === pin.code)
+  );
+  const filteredPresenceData = presenceData.filter(pres => 
+    filteredData.some(sev => sev.code === pres.code)
+  );
+
+  updateSeverityChart(filteredData);
+  updatePinTrendChart(filteredPinData);
+  updatePartnersChart(filteredPresenceData);
+  updateCoverageChart(filteredPinData);
+  updateSectorSeverityChart(filteredData);
+}
+
+      function updateSeverityChart(filteredData) {
+        const severityCounts = [0, 0, 0, 0, 0];
+        filteredData.forEach((mun) => {
+          severityCounts[mun.finalSeverity - 1]++;
+        });
+
+        new Chart(document.getElementById("severity-chart").getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: ["1", "2", "3", "4", "5"],
+            datasets: [
+              {
+                label: "Municipios por nivel de severidad",
+                data: severityCounts,
+                backgroundColor: [
+                  UN_COLORS.green,
+                  UN_COLORS.yellow,
+                  UN_COLORS.orange,
+                  UN_COLORS.red,
+                  UN_COLORS.purple,
+                ],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: false,
+              },
+              title: {
+                display: true,
+                text: "Distribución de Severidad",
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Número de municipios",
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function updatePinTrendChart(filteredPinData) {
+        new Chart(document.getElementById("pin-trend-chart").getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: SECTORS.map((s) => s.name),
+            datasets: [
+              {
+                label: "PIN",
+                data: SECTORS.map((sector) =>
+                  filteredPinData.reduce(
+                    (sum, mun) => sum + (mun[sector.id] || 0),
+                    0
+                  )
+                ),
+                backgroundColor: UN_COLORS.blue,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: false,
+              },
+              title: {
+                display: true,
+                text: "PIN por Sector",
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Personas",
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function calculatePartnerDistribution(filteredPresenceData) {
+        const ranges = [0, 0, 0, 0, 0];
+        filteredPresenceData.forEach((mun) => {
+          if (mun.partners <= 5) ranges[0]++;
+          else if (mun.partners <= 10) ranges[1]++;
+          else if (mun.partners <= 15) ranges[2]++;
+          else if (mun.partners <= 20) ranges[3]++;
+          else ranges[4]++;
+        });
+        return ranges;
+      }
+
+      function updatePartnersChart(filteredPresenceData) {
+        new Chart(document.getElementById("partners-chart").getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: ["0-5", "6-10", "11-15", "16-20", "20+"],
+            datasets: [
+              {
+                label: "Número de municipios",
+                data: calculatePartnerDistribution(filteredPresenceData),
+                backgroundColor: UN_COLORS.purple,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: false,
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: "Municipios",
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function updateCoverageChart(filteredPinData) {
+        new Chart(document.getElementById("coverage-chart").getContext("2d"), {
+          type: "bar",
+          data: {
+            labels: SECTORS.map((s) => s.name),
+            datasets: [
+              {
+                label: "Cobertura (%)",
+                data: SECTORS.map((sector) => {
+                  const sectorPIN = filteredPinData.reduce(
+                    (sum, mun) => sum + (mun[sector.id] || 0),
+                    0
+                  );
+                  const totalPopulation = filteredPinData.reduce(
+                    (sum, mun) => sum + mun.population,
+                    0
+                  );
+                  return ((sectorPIN / totalPopulation) * 100).toFixed(1);
+                }),
+                backgroundColor: UN_COLORS.blue,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                display: false,
+              },
+              title: {
+                display: true,
+                text: "Cobertura por Sector",
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                title: {
+                  display: true,
+                  text: "% de cobertura",
+                },
+              },
+            },
+          },
+        });
+      }
+
+      function updateSectorSeverityChart(filteredData) {
+        new Chart(
+          document.getElementById("sector-severity-chart").getContext("2d"),
+          {
+            type: "radar",
+            data: {
+              labels: SECTORS.map((s) => s.name),
+              datasets: [
+                {
+                  label: "Severidad prom.",
+                  data: SECTORS.map((sector) => {
+                    const avg =
+                      filteredData.reduce(
+                        (sum, mun) => sum + (mun[sector.id] || 0),
+                        0
+                      ) / filteredData.length;
+                    return parseFloat(avg.toFixed(1));
+                  }),
+                  backgroundColor: `${UN_COLORS.blue}40`,
+                  borderColor: UN_COLORS.blue,
+                  borderWidth: 2,
+                },
+              ],
+            },
+            options: {
+              scales: {
+                r: {
+                  beginAtZero: true,
+                  max: 5,
+                  ticks: {
+                    stepSize: 1,
+                  },
+                },
+              },
+            },
+          }
+        );
+      }
+
+      function updateSectoralGrid() {
+        const grid = document.getElementById("sectoral-grid");
+        grid.innerHTML = "";
+
+        const filteredData = filterData();
+        const filteredPinData = pinData.filter((pin) =>
+          filteredData.some((sev) => sev.code === pin.code)
+        );
+
+        SECTORS.forEach((sector) => {
+          const totalPIN = filteredPinData.reduce(
+            (sum, mun) => sum + (mun[sector.id] || 0),
+            0
+          );
+
+          const avgSeverity =
+            filteredData.reduce((sum, mun) => sum + (mun[sector.id] || 0), 0) /
+            filteredData.length;
+
+          const sectorCard = document.createElement("div");
+          sectorCard.className = "sector-card";
+
+          sectorCard.innerHTML = `
+            <div class="sector-header">
+              <div class="sector-icon">
+                <i class="fas fa-${sector.icon}"></i>
+              </div>
+              <div class="sector-title">${sector.name}</div>
+            </div>
+            <div class="sector-stats">
+              <div class="stat-row">
+                <span class="stat-label">PIN:</span>
+                <span class="stat-value">${formatNumber(totalPIN)}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">% Población Total:</span>
+                <span class="stat-value">
+                  ${(
+                    (totalPIN /
+                      filteredPinData.reduce(
+                        (sum, mun) => sum + (mun.population || 0),
+                        0
+                      )) *
+                    100
+                  ).toFixed(1)}%
+                </span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Severidad:</span>
+                <span class="stat-value">
+                  <span class="severity-indicator" style="background:${getSeverityColor(
+                    avgSeverity
+                  )}"></span>
+                  ${avgSeverity.toFixed(1)}
+                </span>
+              </div>
+            </div>
+          `;
+
+          grid.appendChild(sectorCard);
+        });
+      }
+
+      function initializeFilters() {
+        initializeMultiselect(
+          "municipality-multiselect",
+          severityData.map((m) => ({
+            value: m.code,
+            label: m.name,
+          })),
+          (value, checked) => {
+            if (checked) {
+              state.selectedMunicipalities.push(value);
+            } else {
+              state.selectedMunicipalities =
+                state.selectedMunicipalities.filter((v) => v !== value);
+            }
+            updateDashboard();
+          }
+        );
+
+        setupEventListeners();
+      }
+
+      function initializeMultiselect(containerId, options, onChange) {
+        const container = document.getElementById(containerId);
+        if (!container) {
+          console.error(`Container ${containerId} no encontrado`);
+          return;
+        }
+        const dropdown = container.querySelector(".multiselect-dropdown");
+        const optionsContainer = container.querySelector(
+          ".multiselect-options"
+        );
+
+        options.forEach((option) => {
+          const div = document.createElement("div");
+          div.className = "multiselect-option";
+          div.innerHTML = `
+            <input type="checkbox" value="${option.value}">
+            <span>${option.label}</span>
+          `;
+
+          const checkbox = div.querySelector("input");
+          checkbox.addEventListener("change", () => {
+            onChange(option.value, checkbox.checked);
+            updateSelectedText(container);
+          });
+
+          optionsContainer.appendChild(div);
+        });
+
+        dropdown.addEventListener("click", () => {
+          optionsContainer.style.display =
+            optionsContainer.style.display === "none" ? "block" : "none";
+        });
+
+        document.addEventListener("click", (e) => {
+          if (!container.contains(e.target)) {
+            optionsContainer.style.display = "none";
+          }
+        });
+      }
+
+      function updateSelectedText(container) {
+        const dropdown = container.querySelector(".multiselect-dropdown");
+        const optionsContainer = container.querySelector(
+          ".multiselect-options"
+        );
+        const selected = Array.from(
+          optionsContainer.querySelectorAll("input:checked")
+        ).map((input) => input.nextElementSibling.textContent);
+        dropdown.textContent =
+          selected.length > 0 ? selected.join(", ") : "Seleccionar...";
+      }
+
+      function setupEventListeners() {
+        document
+          .getElementById("state-select")
+          .addEventListener("change", (e) => {
+            state.selectedState = e.target.value;
+            state.selectedMunicipalities = [];
+            const municipalitySelect = document.getElementById(
+              "municipality-multiselect"
+            );
+            const optionsContainer = municipalitySelect.querySelector(
+              ".multiselect-options"
+            );
+            const dropdown = municipalitySelect.querySelector(
+              ".multiselect-dropdown"
+            );
+
+            optionsContainer.innerHTML = "";
+
+            if (state.selectedState !== "all") {
+              const selectAllDiv = document.createElement("div");
+              selectAllDiv.className = "multiselect-option";
+              selectAllDiv.innerHTML = `
+              <input type="checkbox" value="all">
+              <span>Seleccionar todos los municipios</span>
+            `;
+
+              const selectAllCheckbox = selectAllDiv.querySelector("input");
+              selectAllCheckbox.addEventListener("change", () => {
+                const filteredMunicipalities = severityData.filter(
+                  (m) =>
+                    m.state.toLowerCase() === state.selectedState.toLowerCase()
+                );
+
+                if (selectAllCheckbox.checked) {
+                  state.selectedMunicipalities = filteredMunicipalities.map(
+                    (m) => m.code
+                  );
+                  optionsContainer
+                    .querySelectorAll("input[type='checkbox']")
+                    .forEach((cb) => {
+                      cb.checked = true;
+                    });
+                } else {
+                  state.selectedMunicipalities = [];
+                  optionsContainer
+                    .querySelectorAll("input[type='checkbox']")
+                    .forEach((cb) => {
+                      cb.checked = false;
+                    });
+                }
+                updateSelectedText(municipalitySelect);
+                updateDashboard();
+              });
+
+              optionsContainer.appendChild(selectAllDiv);
+            }
+
+            const filteredMunicipalities = severityData
+              .filter(
+                (m) =>
+                  state.selectedState === "all" ||
+                  m.state
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "") ===
+                    state.selectedState
+                      .toLowerCase()
+                      .normalize("NFD")
+                      .replace(/[\u0300-\u036f]/g, "")
+              )
+              .sort((a, b) => a.name.localeCompare(b.name));
+
+            filteredMunicipalities.forEach((m) => {
+              const div = document.createElement("div");
+              div.className = "multiselect-option";
+              div.innerHTML = `
+              <input type="checkbox" value="${m.code}">
+              <span>${m.name}</span>
+            `;
+
+              const checkbox = div.querySelector("input");
+              checkbox.addEventListener("change", () => {
+                if (checkbox.checked) {
+                  state.selectedMunicipalities.push(m.code);
+                } else {
+                  state.selectedMunicipalities =
+                    state.selectedMunicipalities.filter((v) => v !== m.code);
+                }
+                updateSelectedText(municipalitySelect);
+                updateDashboard();
+              });
+
+              optionsContainer.appendChild(div);
+            });
+
+            updateSelectedText(municipalitySelect);
+            updateDashboard();
+          });
+
+        document
+          .getElementById("priority-select")
+          .addEventListener("change", (e) => {
+            state.selectedPriority = e.target.value;
+            updateDashboard();
+          });
+
+        document
+          .querySelector(".severity-buttons")
+          .addEventListener("click", (e) => {
+            if (e.target.classList.contains("severity-button")) {
+              e.target.classList.toggle("selected");
+              const selectedButtons = document.querySelectorAll(
+                ".severity-button.selected"
+              );
+              const selectedValues = Array.from(selectedButtons).map((btn) =>
+                parseInt(btn.dataset.value)
+              );
+
+              if (selectedValues.length === 0) {
+                document
+                  .querySelectorAll(".severity-button")
+                  .forEach((btn) => btn.classList.add("selected"));
+                state.severityRange = [1, 5];
+              } else {
+                state.severityRange = [
+                  Math.min(...selectedValues),
+                  Math.max(...selectedValues),
+                ];
+              }
+              updateDashboard();
+            }
+          });
+      }
+
+      function exportData() {
+        const exportData = {
+          severityData,
+          pinData,
+          presenceData,
+          filteredData: filterData(),
+        };
+
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "dashboard-data.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+
+      function printDashboard() {
+        window.print();
+      }
+initializeDashboard();
+        updateDashboard();
+    };
+</script>
+  </body>
+</html>
